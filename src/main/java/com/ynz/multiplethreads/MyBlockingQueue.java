@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 @Component
-public class MyBlockingQueue<T> implements MyQueue<T> {
+public class MyBlockingQueue<T> implements MyQueue<T>, Statistics<T> {
     private Deque<T> myQueue = new ArrayDeque<>();
 
     private Lock lock = new ReentrantLock();
@@ -51,7 +51,7 @@ public class MyBlockingQueue<T> implements MyQueue<T> {
         lock.lock();
 
         try {
-            if (myQueue.size() == 20) isFull.wait();
+            //if (myQueue.size() == 20) isFull.wait();
 
             if (myQueue.offer(t)) {
                 totalProduced++;

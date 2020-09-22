@@ -12,6 +12,5 @@ public class Producer<T> implements Runnable {
     @Override
     public void run() {
         tMyQueue.enqueue(product);
-        log.info("produce: " + product.toString());
     }
 }
