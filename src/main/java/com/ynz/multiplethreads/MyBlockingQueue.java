@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 @Component
-public class MyBlockingQueue<T> implements MyQueue<T>, Statistics<T> {
+public class MyBlockingQueue<T> implements MyQueue<T>, Statistics {
     private Deque<T> myQueue = new ArrayDeque<>();
 
     private Lock lock = new ReentrantLock();
