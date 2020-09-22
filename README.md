@@ -1,3 +1,3 @@
 # blocking-queue-lock
 
-blocking queue using explicity lock
+blocking queue using explicit lock
