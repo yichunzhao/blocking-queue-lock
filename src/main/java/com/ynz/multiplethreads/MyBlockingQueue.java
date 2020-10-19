@@ -22,8 +22,8 @@ public class MyBlockingQueue<T> implements MyQueue<T> {
 
     private Lock lock = new ReentrantLock();
 
-    private Condition isFull = lock.newCondition();
-    private Condition isEmpty = lock.newCondition();
+    private Condition notFull = lock.newCondition();
+    private Condition notEmpty = lock.newCondition();
 
     @SneakyThrows
     @Override
@@ -32,12 +32,10 @@ public class MyBlockingQueue<T> implements MyQueue<T> {
 
         try {
             if (myQueue.size() == maxSize) {
-                isFull.await();//block threads to enq.
+                notFull.await();//block threads to enq.
             }
-
             myQueue.offer(item);
-            isEmpty.signalAll();//notify waiting threads to produce more items in the Q.
-
+            notEmpty.signalAll();//notify waiting threads to produce more items in the Q.
         } finally {
             lock.unlock();
         }
@@ -47,10 +45,11 @@ public class MyBlockingQueue<T> implements MyQueue<T> {
     @Override
     public T dequeue() {
         lock.lock();
+
         try {
-            while (myQueue.size() == 0) isEmpty.await();//block all threads to read.
+            if (myQueue.isEmpty()) notEmpty.await();//block all threads to read.
             T iterm = myQueue.poll();//remove a item
-            isFull.signalAll();
+            notFull.signalAll();
             return iterm;
         } finally {
             lock.unlock();
