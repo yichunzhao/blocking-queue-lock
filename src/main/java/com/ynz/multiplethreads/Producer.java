@@ -3,27 +3,20 @@ package com.ynz.multiplethreads;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 @Slf4j
 @RequiredArgsConstructor(staticName = "of")
 public class Producer<T> implements Runnable {
-    private static int count;
+    private static AtomicInteger count = new AtomicInteger();
 
     private final MyQueue<T> tMyQueue;
     private final T product;
 
-    synchronized private void increaseOne() {
-        count++;
-    }
-
-    synchronized private int count() {
-        return count;
-    }
-
     @Override
     public void run() {
         tMyQueue.enqueue(product);
-        increaseOne();
-        log.info("produce: " + product + " total produced: " + count());
+        log.info("produce: " + product + " total produced: " + count.addAndGet(1));
 
         try {
             Thread.sleep(10);
