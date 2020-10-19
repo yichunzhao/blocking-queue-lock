@@ -11,8 +11,8 @@ public class Consumer<T> implements Runnable {
     @Override
     public void run() {
         while (true) {
-            tMyQueue.dequeue();
-
+            T item = tMyQueue.dequeue();
+            if (item.equals(Integer.MAX_VALUE)) break;
         }
     }
 }

@@ -4,10 +4,11 @@ package com.ynz.multiplethreads;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -15,12 +16,15 @@ import java.util.concurrent.locks.ReentrantLock;
 @Slf4j
 @Component
 public class MyBlockingQueue<T> implements MyQueue<T>, Statistics {
-    private Deque<T> myQueue = new ArrayDeque<>();
+    @Value("${queue.size}")
+    private int max_size;
+
+    private Queue<T> myQueue = new LinkedList<>();
 
     private Lock lock = new ReentrantLock();
     private Condition isFull = lock.newCondition();
     private Condition isEmpty = lock.newCondition();
-    private Condition isNotFull = lock.newCondition();
+
 
     @Getter
     private int totalProduced;
@@ -29,17 +33,20 @@ public class MyBlockingQueue<T> implements MyQueue<T>, Statistics {
 
     @SneakyThrows
     @Override
-    public T dequeue() {
+    public void enqueue(T item) {
         lock.lock();
 
         try {
-            if (myQueue.isEmpty()) isEmpty.wait();
+            if (myQueue.size() == max_size) {
+                isFull.await();//block threads to enq.
+            }
 
-            T polled = myQueue.poll();
-            totalConsumed++;
-            log.info("DeQ: " + polled.toString());
-            isNotFull.signal();
-            return polled;
+            myQueue.offer(item);
+            isEmpty.signalAll();//notify waiting threads to produce more items in the Q.
+
+            totalProduced++;
+            log.info("EnQ:" + item.toString() + ". Q size: " + myQueue.size());
+
         } finally {
             lock.unlock();
         }
@@ -47,19 +54,31 @@ public class MyBlockingQueue<T> implements MyQueue<T>, Statistics {
 
     @SneakyThrows
     @Override
-    public void enqueue(T t) {
+    public T dequeue() {
         lock.lock();
-
         try {
-            //if (myQueue.size() == 20) isFull.wait();
-
-            if (myQueue.offer(t)) {
-                totalProduced++;
-                log.info("EnQ:" + t.toString());
-                isNotFull.signal();
-            }
+            while (myQueue.size() == 0) isEmpty.await();//block all threads to read.
+            T iterm = myQueue.poll();//remove a item
+            isFull.signalAll();
+            totalConsumed++;
+            log.info("DeQ: " + iterm.toString());
+            return iterm;
         } finally {
             lock.unlock();
         }
+    }
+
+
+    @Override
+    public int size() {
+        lock.lock();
+        try {
+
+            return this.myQueue.size();
+        } finally {
+            lock.unlock();
+        }
+
+
     }
 }

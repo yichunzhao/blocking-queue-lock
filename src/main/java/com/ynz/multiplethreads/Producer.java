@@ -12,5 +12,10 @@ public class Producer<T> implements Runnable {
     @Override
     public void run() {
         tMyQueue.enqueue(product);
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            log.error("producer exception: ", e);
+        }
     }
 }
